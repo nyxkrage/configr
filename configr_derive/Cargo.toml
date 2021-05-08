@@ -5,8 +5,8 @@ edition = "2018"
 description = "The dead easy way to use config files in your project"
 authors = ["Carsten K. Jørgensen <carsten@kragelund.dev>"]
 repository = "https://github.com/nyxiative/configr"
-license = "UNLICENSE"
-readme = "https://github.com/nyxiative/configr/blob/main/README.md"
+license-file = "../LICENSE"
+readme = "../README.md"
 
 [lib]
 proc-macro = true
