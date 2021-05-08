@@ -8,7 +8,7 @@ It can either use the OS config directories which are as follows
  - Linux: `$XDG_CONFIG_HOME/app-name/config.toml`
  - Windows: `%APPDATA%/app-name/config.toml`
  - Mac OS: `$HOME/Library/Application Support/app-name/config.toml`
-
+or a custom config directory
 
 ## Usage
 Add the following to your `Cargo.toml`
