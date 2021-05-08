@@ -1,15 +1,18 @@
 [package]
 name = "configr"
+description = "The dead easy way to use config files in your project"
 version = "0.5.0"
 authors = ["Carsten K. Jørgensen <carsten@kragelund.dev>"]
+repository = "https://github.com/nyxiative/configr"
+license = "UNLICENSE"
+readme = "README.md"
+categories = ["config", "filesystem"]
+keywords = ["config", "crossplatform", "cross-platform", "easy", "config file", "configfile"]
 edition = "2018"
-publish = false
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 dirs = "3.0.2"
 serde = {version = "1.0.125", features = ["derive"]}
 snafu = "0.6.10"
 toml = "0.5.8"
-configr_derive = { path = "configr_derive" }
+configr_derive = "0.5.0"
