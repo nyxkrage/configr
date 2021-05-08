@@ -7,7 +7,7 @@ repository = "https://github.com/nyxiative/configr"
 license-file = "LICENSE"
 readme = "README.md"
 categories = ["config", "filesystem"]
-keywords = ["config", "crossplatform", "cross-platform", "easy", "config file", "configfile"]
+keywords = ["config", "crossplatform", "cross-platform", "easy", "config-file"]
 edition = "2018"
 
 [dependencies]
