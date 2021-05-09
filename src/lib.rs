@@ -15,8 +15,8 @@ pub enum ConfigError {
 	#[snafu(display("Unable to create configuration file or directory {}: {}", path.display(), source))]
 	CreateFs { source: std::io::Error, path: PathBuf },
 	/// TOML parsing failed in some way.
-	#[snafu(display("Unable to parse TOML\n{}: {}", toml, source))]
-	Deserialize { source: toml::de::Error, toml: String },
+	#[snafu(display("Unable to parse TOML\n{}\n```\n{}```{}", path.display(), toml, source))]
+	Deserialize { source: toml::de::Error, path: PathBuf, toml: String },
 	/// Unable to get the configuration directory, possibly because of
 	/// an unsupported OS.
 	#[snafu(display(
@@ -32,7 +32,7 @@ type Result<T, E = ConfigError> = std::result::Result<T, E>;
 /// manually or using the [`Configr`][configr_derive::Configr]
 /// derive macro
 ///
-/// ```rust
+/// ```no_run
 /// use configr::{Config, Configr};
 /// #[derive(Configr, serde::Deserialize)]
 /// pub struct BotConfig {
@@ -116,6 +116,6 @@ where
 			path: &config_location,
 		})?;
 
-		toml::from_str::<T>(&config_toml).context(Deserialize { toml: &config_toml })
+		toml::from_str::<T>(&config_toml).context(Deserialize { path: &config_location, toml: &config_toml })
 	}
 }
