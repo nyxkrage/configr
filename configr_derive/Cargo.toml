@@ -1,11 +1,11 @@
 [package]
 name = "configr_derive"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2018"
 description = "The dead easy way to use config files in your project"
 authors = ["Carsten K. Jørgensen <carsten@kragelund.dev>"]
 repository = "https://github.com/nyxiative/configr"
-license-file = "../LICENSE"
+license = "Unlicense"
 readme = "../README.md"
 
 [lib]
