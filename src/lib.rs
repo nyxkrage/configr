@@ -1,5 +1,4 @@
 use std::fs::{create_dir_all, File};
-use std::io::Read;
 use std::path::PathBuf;
 
 pub use configr_derive::Configr;
@@ -16,7 +15,11 @@ pub enum ConfigError {
 	CreateFs { source: std::io::Error, path: PathBuf },
 	/// TOML parsing failed in some way.
 	#[snafu(display("Unable to parse TOML\n{}\n```\n{}```{}", path.display(), toml, source))]
-	Deserialize { source: toml::de::Error, path: PathBuf, toml: String },
+	Deserialize {
+		source: toml::de::Error,
+		path: PathBuf,
+		toml: String,
+	},
 	/// Unable to get the configuration directory, possibly because of
 	/// an unsupported OS.
 	#[snafu(display(
@@ -44,9 +47,9 @@ type Result<T, E = ConfigError> = std::result::Result<T, E>;
 ///
 /// let config = BotConfig::load("bot-app").unwrap();
 /// ```
-pub trait Config<T>
+pub trait Config<C>
 where
-	T: serde::de::DeserializeOwned + Sized,
+	C: serde::de::DeserializeOwned + Config<C>,
 {
 	/// Load the config from the config file located in the OS
 	/// specific config directory\
@@ -65,7 +68,7 @@ where
 	/// Linux: `$XDG_CONFIG_HOME/`\
 	/// Windows: `%APPDATA%/`\
 	/// Mac OS: `$HOME/Library/Application Support/`
-	fn load(app_name: &str) -> Result<T> {
+	fn load(app_name: &str) -> Result<C> {
 		let mut dir = dirs::config_dir().context(ConfigDir)?;
 
 		Self::load_with_dir(app_name, &mut dir)
@@ -91,7 +94,7 @@ where
 	fn load_with_dir(
 		app_name: &str,
 		config_dir: &mut PathBuf,
-	) -> Result<T> {
+	) -> Result<C> {
 		// Get the location of the config file, create directories and the
 		// file itself if needed.
 		let config_location = {
@@ -101,21 +104,74 @@ where
 			}
 			config_dir.push("config.toml");
 			if !config_dir.exists() {
-				File::create(&config_dir).context(CreateFs { path: &config_dir })?;
+				let fd = File::create(&config_dir).context(CreateFs { path: &config_dir })?;
+				C::populate_template(fd).unwrap();
 			}
 			config_dir
 		};
 
-		let mut config_toml = String::new();
-
-		let mut file = File::open(&config_location).context(ReadConfig {
+		let toml_content = std::fs::read_to_string(&config_location).context(ReadConfig {
 			path: &config_location,
 		})?;
 
-		file.read_to_string(&mut config_toml).context(ReadConfig {
+		toml::from_str::<C>(&toml_content).context(Deserialize {
 			path: &config_location,
-		})?;
+			toml: &toml_content,
+		})
+	}
 
-		toml::from_str::<T>(&config_toml).context(Deserialize { path: &config_location, toml: &config_toml })
+	fn populate_template(fd: File) -> std::io::Result<()>;
+}
+
+#[cfg(test)]
+mod configr_tests {
+	use crate::{Config, ConfigError, Configr};
+	#[derive(Configr, serde::Deserialize, Debug, PartialEq)]
+	struct TestConfig {
+		a: String,
+		b: String,
+	}
+	#[test]
+	fn generate_template_and_error() {
+		let config = TestConfig::load_with_dir("Test Config1", &mut std::path::PathBuf::from("."));
+		// expect toml parse error with correct fields but no actual values
+		assert!(if let Err(e) = config {
+			if let ConfigError::Deserialize {
+				path,
+				toml,
+				source: _,
+			} = e
+			{
+				if path == std::path::PathBuf::from("./test-config1/config.toml") && toml == "a=\nb=\n" {
+					true
+				} else {
+					false
+				}
+			} else {
+				false
+			}
+		} else {
+			false
+		});
+
+		std::fs::remove_dir_all("test-config1").unwrap();
+	}
+
+	#[test]
+	fn read_proper_config() {
+		std::fs::create_dir("test-config2").unwrap();
+		std::fs::write("test-config2/config.toml", b"a=\"test\"\nb=\"test\"\n").unwrap();
+		let config = TestConfig::load_with_dir("Test Config2", &mut std::path::PathBuf::from("."));
+		// expect toml parse error with correct fields but no actual values
+		assert!(if let Ok(c) = config {
+			c == TestConfig {
+				a: "test".into(),
+				b: "test".into(),
+			}
+		} else {
+			false
+		});
+
+		std::fs::remove_dir_all("test-config2").unwrap();
 	}
 }

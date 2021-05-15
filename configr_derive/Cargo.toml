@@ -1,6 +1,6 @@
 [package]
 name = "configr_derive"
-version = "0.5.1"
+version = "0.6.0"
 edition = "2018"
 description = "The dead easy way to use config files in your project"
 authors = ["Carsten K. Jørgensen <carsten@kragelund.dev>"]

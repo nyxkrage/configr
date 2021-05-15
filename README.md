@@ -13,7 +13,7 @@ or a custom config directory
 ## Usage
 Add the following to your `Cargo.toml`
 ```toml
-configr = "0.5.2"
+configr = "0.6"
 ```
 or use [cargo-edit](https://github.com/killercup/cargo-edit/) with `cargo add configr`
 
