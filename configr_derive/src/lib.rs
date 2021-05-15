@@ -1,7 +1,7 @@
 use proc_macro::{self, TokenStream};
 use syn::{parse_macro_input, DeriveInput};
 
-#[proc_macro_derive(ConfigrNoDefaultDerive)]
+#[proc_macro_derive(Configr)]
 pub fn configr_no_default(input: TokenStream) -> TokenStream {
 	let DeriveInput { ident, data, .. } = parse_macro_input!(input);
 	if let syn::Data::Struct(s) = data {
@@ -32,7 +32,7 @@ pub fn configr_no_default(input: TokenStream) -> TokenStream {
 	return "".parse().unwrap();
 }
 
-#[proc_macro_derive(ConfigrDefaultDerive)]
+#[proc_macro_derive(ConfigrDefault)]
 pub fn configr(input: TokenStream) -> TokenStream {
 	let DeriveInput { ident, .. } = parse_macro_input!(input);
 	format!(
@@ -46,34 +46,6 @@ pub fn configr(input: TokenStream) -> TokenStream {
 		}}
 	}}"#,
 		ident
-	)
-	.parse()
-	.unwrap()
-}
-
-#[proc_macro_attribute]
-#[allow(non_snake_case)]
-pub fn ConfigrDefault(
-	_: TokenStream,
-	item: TokenStream,
-) -> TokenStream {
-	format!(
-		"#[derive(configr::derive::ConfigrDefault, serde::Deserialize, serde::Serialize, std::default::Default)]\n{}",
-		item
-	)
-	.parse()
-	.unwrap()
-}
-
-#[proc_macro_attribute]
-#[allow(non_snake_case)]
-pub fn Configr(
-	_: TokenStream,
-	item: TokenStream,
-) -> TokenStream {
-	format!(
-		"#[derive(configr::derive::Configr, serde::Deserialize)]\n{}",
-		item
 	)
 	.parse()
 	.unwrap()

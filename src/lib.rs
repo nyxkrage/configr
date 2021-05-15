@@ -7,12 +7,6 @@ use snafu::{OptionExt, ResultExt};
 pub use configr_derive::Configr;
 pub use configr_derive::ConfigrDefault;
 
-/// Reexport of derive macros with better names
-pub mod derive {
-	pub use configr_derive::ConfigrNoDefaultDerive as Configr;
-	pub use configr_derive::ConfigrDefaultDerive as ConfigrDefault;
-}
-
 /// List of error categories
 #[derive(snafu::Snafu, Debug)]
 pub enum ConfigError {
@@ -45,8 +39,8 @@ type Result<T, E = ConfigError> = std::result::Result<T, E>;
 /// attribute macro
 ///
 /// ```no_run
-/// use configr::{Config, Configr};
-/// #[Configr]
+/// use configr::{Config, ConfigrDefault};
+/// #[derive(ConfigrDefault, Default, serde::Serialize, serde::Deserialize)]
 /// pub struct BotConfig {
 ///     bot_username: String,
 ///     client_id: String,
@@ -135,17 +129,16 @@ where
 #[cfg(test)]
 mod configr_tests {
 	use crate as configr;
+	use serde::{Serialize, Deserialize};
 	use configr::{Config, ConfigError, ConfigrDefault, Configr};
 
-	#[ConfigrDefault]
-	#[derive(PartialEq)]
+	#[derive(ConfigrDefault, Deserialize, Serialize, Debug, Default, PartialEq)]
 	struct TestDefaultConfig {
 		a: String,
 		b: String,
 	}
 
-	#[Configr]
-	#[derive(PartialEq)]
+	#[derive(Configr, Deserialize, Debug, PartialEq)]
 	struct TestConfig {
 		a: String,
 		b: String,

@@ -15,7 +15,7 @@ or a custom config directory
 ## Usage
 Add the following to your `Cargo.toml`
 ```toml
-configr = "0.6.5"
+configr = "0.6.6"
 ```
 or use [cargo-edit](https://github.com/killercup/cargo-edit/) with 
 `cargo add configr`
@@ -23,7 +23,7 @@ or use [cargo-edit](https://github.com/killercup/cargo-edit/) with
 then in your project add the following snippet
 ```rust
 use configr::{Config, ConfigrDefault};
-#[ConfigrDefault]
+#[derive(ConfigrDefault, Deserialize, Serialize, Default)]
 pub struct BotConfig {
     bot_username: String,
     client_id: String,
@@ -39,14 +39,15 @@ directory
 ```rust
 let config = BotConfig::load("bot app").unwrap(); // Will load from /home/USER/.config/bot-app/config.toml
 ```
-or with the `load_with_dir` function to use a custom config directory
+or with the `load_with_dir` function to use a custom config 
+directory
 ```rust
 let config = BotConfig::load_with_dir("bot app", "$HOME").unwrap(); // Will load from /home/USER/bot-app/config.toml
 ```
 
 Use `ConfigrDefault` if you want the config.toml to be populated with 
-default values, or use `Configr` if you want it to be populated with 
-empty fields with the correct names
+default values, based on Default implentation, or use `Configr` if 
+you want it to be populated with empty fields with the correct names
 
 Example of above BotConfig\
 With `Configr`
