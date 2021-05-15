@@ -1,8 +1,8 @@
 use proc_macro::{self, TokenStream};
 use syn::{parse_macro_input, DeriveInput};
 
-#[proc_macro_derive(Configr)]
-pub fn configr(input: TokenStream) -> TokenStream {
+#[proc_macro_derive(ConfigrNoDefaultDerive)]
+pub fn configr_no_default(input: TokenStream) -> TokenStream {
 	let DeriveInput { ident, data, .. } = parse_macro_input!(input);
 	if let syn::Data::Struct(s) = data {
 		if let syn::Fields::Named(f) = s.fields {
@@ -30,4 +30,51 @@ pub fn configr(input: TokenStream) -> TokenStream {
 		}
 	}
 	return "".parse().unwrap();
+}
+
+#[proc_macro_derive(ConfigrDefaultDerive)]
+pub fn configr(input: TokenStream) -> TokenStream {
+	let DeriveInput { ident, .. } = parse_macro_input!(input);
+	format!(
+		r#"impl Config<Self> for {} {{
+		fn populate_template(fd: std::fs::File) -> std::io::Result<()> {{
+			use std::io::Write;
+			let mut writer = std::io::BufWriter::new(fd);
+			writer.write(toml::to_string::<Self>(&Default::default()).unwrap().as_bytes())?;
+			writer.flush()?;
+			Ok(())
+		}}
+	}}"#,
+		ident
+	)
+	.parse()
+	.unwrap()
+}
+
+#[proc_macro_attribute]
+#[allow(non_snake_case)]
+pub fn ConfigrDefault(
+	_: TokenStream,
+	item: TokenStream,
+) -> TokenStream {
+	format!(
+		"#[derive(configr::derive::ConfigrDefault, serde::Deserialize, serde::Serialize, std::default::Default)]\n{}",
+		item
+	)
+	.parse()
+	.unwrap()
+}
+
+#[proc_macro_attribute]
+#[allow(non_snake_case)]
+pub fn Configr(
+	_: TokenStream,
+	item: TokenStream,
+) -> TokenStream {
+	format!(
+		"#[derive(configr::derive::Configr, serde::Deserialize)]\n{}",
+		item
+	)
+	.parse()
+	.unwrap()
 }

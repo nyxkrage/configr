@@ -1,8 +1,17 @@
 use std::fs::{create_dir_all, File};
 use std::path::PathBuf;
 
-pub use configr_derive::Configr;
 use snafu::{OptionExt, ResultExt};
+
+/// Reexport of Attribute Macros
+pub use configr_derive::Configr;
+pub use configr_derive::ConfigrDefault;
+
+/// Reexport of derive macros with better names
+pub mod derive {
+	pub use configr_derive::ConfigrNoDefaultDerive as Configr;
+	pub use configr_derive::ConfigrDefaultDerive as ConfigrDefault;
+}
 
 /// List of error categories
 #[derive(snafu::Snafu, Debug)]
@@ -33,11 +42,11 @@ type Result<T, E = ConfigError> = std::result::Result<T, E>;
 
 /// This is the main trait that you implement on your struct, either
 /// manually or using the [`Configr`][configr_derive::Configr]
-/// derive macro
+/// attribute macro
 ///
 /// ```no_run
 /// use configr::{Config, Configr};
-/// #[derive(Configr, serde::Deserialize)]
+/// #[Configr]
 /// pub struct BotConfig {
 ///     bot_username: String,
 ///     client_id: String,
@@ -125,12 +134,23 @@ where
 
 #[cfg(test)]
 mod configr_tests {
-	use crate::{Config, ConfigError, Configr};
-	#[derive(Configr, serde::Deserialize, Debug, PartialEq)]
+	use crate as configr;
+	use configr::{Config, ConfigError, ConfigrDefault, Configr};
+
+	#[ConfigrDefault]
+	#[derive(PartialEq)]
+	struct TestDefaultConfig {
+		a: String,
+		b: String,
+	}
+
+	#[Configr]
+	#[derive(PartialEq)]
 	struct TestConfig {
 		a: String,
 		b: String,
 	}
+
 	#[test]
 	fn generate_template_and_error() {
 		let config = TestConfig::load_with_dir("Test Config1", &mut std::path::PathBuf::from("."));
@@ -173,5 +193,19 @@ mod configr_tests {
 		});
 
 		std::fs::remove_dir_all("test-config2").unwrap();
+	}
+
+	#[test]
+	fn default_serialized_config() {
+		let config = TestDefaultConfig::load_with_dir("Test Config3", &mut std::path::PathBuf::from("."));
+		assert!(if let Ok(c) = config {
+			c == TestDefaultConfig {
+				a: Default::default(),
+				b: Default::default(),
+			}
+		} else {
+			false
+		});
+		std::fs::remove_dir_all("test-config3").unwrap();
 	}
 }
