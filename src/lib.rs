@@ -1,11 +1,10 @@
 use std::fs::{create_dir_all, File};
 use std::path::PathBuf;
 
-use snafu::{OptionExt, ResultExt};
-
 /// Reexport of Attribute Macros
 pub use configr_derive::Configr;
 pub use configr_derive::ConfigrDefault;
+use snafu::{OptionExt, ResultExt};
 
 /// List of error categories
 #[derive(snafu::Snafu, Debug)]
@@ -48,7 +47,7 @@ type Result<T, E = ConfigError> = std::result::Result<T, E>;
 ///     channel: String,
 /// }
 ///
-/// let config = BotConfig::load("bot-app").unwrap();
+/// let config = BotConfig::load("bot-app", true).unwrap();
 /// ```
 pub trait Config<C>
 where
@@ -63,15 +62,39 @@ where
 	/// Read [`load_with_dir`][Self::load_with_dir] for more
 	/// informationg about failure and config folder structure
 	///
+	/// # Failures
+	/// this will contains the same failure possibilities as
+	/// [`load_with_dir`][Self::load_with_dir] in addtion this can
+	/// also fail due to the user configuration path not being found,
+	/// if this is the case, you should switch to using
+	/// `load_with_dir` with a custom path
+	///
 	/// # Notes
 	/// This should in almost every case be prefered over supplying
 	/// your own configuration directory.
+	///
+	/// The `force_user_dir` option makes sure the fuction always
+	/// prefers the user configuration path, compared to using /etc on
+	/// UNIX systems and besides the executable on other systems, if
+	/// the user configuration file is not found
 	///
 	/// The configuration directory is as follows\
 	/// Linux: `$XDG_CONFIG_HOME/`\
 	/// Windows: `%APPDATA%/`\
 	/// Mac OS: `$HOME/Library/Application Support/`
-	fn load(app_name: &str) -> Result<C> {
+	fn load(
+		app_name: &str,
+		force_user_dir: bool,
+	) -> Result<C> {
+		if !force_user_dir {
+			if let Ok(c) = if cfg!(target_family = "unix") {
+				Self::load_with_dir(app_name, &mut PathBuf::from("/etc"))
+			} else {
+				Self::load_with_dir(app_name, &mut PathBuf::from("./"))
+			} {
+				return Ok(c);
+			}
+		}
 		let mut dir = dirs::config_dir().context(ConfigDir)?;
 
 		Self::load_with_dir(app_name, &mut dir)
@@ -89,7 +112,6 @@ where
 	///
 	/// # Failures
 	/// This function will Error under the following circumstances\
-	/// * If the OS does not have a proper configuration directory\
 	/// * If the config.toml or the app-name directory could not be
 	///   created\
 	/// * If the config.toml could not be read properly\
@@ -128,9 +150,10 @@ where
 
 #[cfg(test)]
 mod configr_tests {
+	use configr::{Config, ConfigError, Configr, ConfigrDefault};
+	use serde::{Deserialize, Serialize};
+
 	use crate as configr;
-	use serde::{Serialize, Deserialize};
-	use configr::{Config, ConfigError, ConfigrDefault, Configr};
 
 	#[derive(ConfigrDefault, Deserialize, Serialize, Debug, Default, PartialEq)]
 	struct TestDefaultConfig {

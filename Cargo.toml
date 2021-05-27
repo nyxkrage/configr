@@ -1,7 +1,7 @@
 [package]
 name = "configr"
 description = "The dead easy way to use config files in your project"
-version = "0.6.6"
+version = "0.7.0"
 authors = ["Carsten K. Jørgensen <carsten@kragelund.dev>"]
 repository = "https://github.com/nyxiative/configr"
 license = "Unlicense"
